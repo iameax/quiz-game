@@ -6,6 +6,9 @@ import type { HydratedGameState, Pack } from "@/lib/types";
 export function BoardView({ state, pack, isHost }: { state: HydratedGameState; pack: Pack; isHost: boolean }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirm, setConfirm] = useState<null | "finish" | "restart">(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [roundTimeSec, setRoundTimeSec] = useState(state.settings.roundTimeSec);
+  const [penaltyPct, setPenaltyPct] = useState(state.settings.penaltyPct);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -16,6 +19,13 @@ export function BoardView({ state, pack, isHost }: { state: HydratedGameState; p
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
   }, [menuOpen]);
+
+  useEffect(() => {
+    if (settingsOpen) {
+      setRoundTimeSec(state.settings.roundTimeSec);
+      setPenaltyPct(state.settings.penaltyPct);
+    }
+  }, [settingsOpen, state.settings.roundTimeSec, state.settings.penaltyPct]);
 
   const onClick = (catIdx: number, valIdx: number) => {
     if (!isHost) return;
@@ -31,6 +41,11 @@ export function BoardView({ state, pack, isHost }: { state: HydratedGameState; p
   const restartGame = () => {
     getSocket("host").emit("host:new-game");
     setConfirm(null);
+    setMenuOpen(false);
+  };
+  const saveSettings = () => {
+    getSocket("host").emit("host:update-settings", { roundTimeSec, penaltyPct });
+    setSettingsOpen(false);
     setMenuOpen(false);
   };
 
@@ -53,8 +68,14 @@ export function BoardView({ state, pack, isHost }: { state: HydratedGameState; p
           {menuOpen && (
             <div className="absolute right-0 mt-2 w-56 rounded-lg bg-slate-900/95 backdrop-blur border border-white/10 shadow-xl overflow-hidden">
               <button
-                onClick={() => setConfirm("finish")}
+                onClick={() => { setSettingsOpen(true); setMenuOpen(false); }}
                 className="w-full text-left px-4 py-3 hover:bg-white/10 transition text-white"
+              >
+                Параметры игры
+              </button>
+              <button
+                onClick={() => setConfirm("finish")}
+                className="w-full text-left px-4 py-3 hover:bg-white/10 transition text-white border-t border-white/5"
               >
                 Завершить игру
               </button>
@@ -104,6 +125,55 @@ export function BoardView({ state, pack, isHost }: { state: HydratedGameState; p
         </div>
       )}
 
+      {settingsOpen && (
+        <div
+          className="fixed inset-0 z-30 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          onClick={() => setSettingsOpen(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-xl bg-slate-900 border border-white/10 p-6 space-y-5"
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 className="text-xl font-bold">Параметры игры</h2>
+            <label className="block">
+              <span className="block mb-2 text-amber-300 text-sm font-medium uppercase tracking-wider">Время раунда (сек)</span>
+              <input
+                type="number"
+                min={1}
+                className="w-full bg-white/5 border border-white/10 text-white p-3 rounded-lg focus:outline-none focus:border-amber-400 focus:bg-white/10 transition"
+                value={roundTimeSec}
+                onChange={e => setRoundTimeSec(+e.target.value)}
+              />
+            </label>
+            <label className="block">
+              <span className="block mb-2 text-amber-300 text-sm font-medium uppercase tracking-wider">Штраф (%)</span>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                className="w-full bg-white/5 border border-white/10 text-white p-3 rounded-lg focus:outline-none focus:border-amber-400 focus:bg-white/10 transition"
+                value={penaltyPct}
+                onChange={e => setPenaltyPct(+e.target.value)}
+              />
+            </label>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setSettingsOpen(false)}
+                className="px-4 py-2 border border-white/20 hover:border-white/40 rounded-lg transition"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={saveSettings}
+                className="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-slate-900 font-semibold rounded-lg transition"
+              >
+                Сохранить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 p-6">
         <div
           className="grid gap-2"
@@ -123,10 +193,9 @@ export function BoardView({ state, pack, isHost }: { state: HydratedGameState; p
                     disabled={used || !isHost}
                     className={`p-6 rounded text-5xl font-extrabold transition ${
                       used
-                        ? "bg-slate-950/40 ring-1 ring-inset ring-white/5 text-transparent"
-                        : "bg-gradient-to-b from-blue-600 via-blue-700 to-blue-900 text-amber-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.18),inset_0_-12px_22px_rgba(0,0,0,0.3),0_4px_16px_rgba(0,0,0,0.35)] hover:from-blue-500 hover:via-blue-600 hover:to-blue-800"
+                        ? "bg-blue-950/30 text-transparent"
+                        : "bg-gradient-to-b from-blue-600 to-blue-800 text-yellow-300 shadow-[inset_0_0_20px_rgba(0,0,0,0.4),0_0_12px_rgba(245,197,24,0.15)] hover:from-blue-500 hover:to-blue-700"
                     } ${isHost && !used ? "cursor-pointer" : "cursor-default"}`}
-                    style={used ? undefined : { textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}
                   >
                     {q.value}
                   </button>

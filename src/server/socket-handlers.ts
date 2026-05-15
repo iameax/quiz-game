@@ -170,6 +170,14 @@ export function registerSocketHandlers(io: Server) {
       broadcast(io);
     });
 
+    socket.on("host:update-settings", (input: Settings) => {
+      const s = gameStore.get(); if (!s) return;
+      const next = { ...s, settings: { ...s.settings, ...input } };
+      gameStore.set(next);
+      broadcast(io);
+      setExpiryTimer(io);
+    });
+
     socket.on("host:end-game", () => {
       const s = gameStore.get(); if (!s) return;
       gameStore.set({ ...s, phase: "results", currentQuestion: null });
