@@ -1,0 +1,4 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+html, body { background: #0a1a3a; color: white; min-height: 100vh; }
