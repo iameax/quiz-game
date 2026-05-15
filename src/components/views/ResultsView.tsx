@@ -17,7 +17,7 @@ export function ResultsView({ state, isHost }: { state: HydratedGameState; isHos
                 : "border border-white/10"
             }`}
           >
-            {t.logoUrl && <img src={t.logoUrl} alt="" className="w-14 h-14 rounded-full object-cover border border-yellow-400/40" />}
+            {t.logoUrl && <img src={t.logoUrl} alt="" className="w-16 h-12 rounded-lg object-cover border border-yellow-400/40" />}
             <div className="text-2xl font-semibold">{t.name}</div>
             <div className="text-yellow-400 text-4xl font-bold tabular-nums">{state.scores[t.id]}</div>
           </div>

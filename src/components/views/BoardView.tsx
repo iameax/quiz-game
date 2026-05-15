@@ -208,7 +208,7 @@ export function BoardView({ state, pack, isHost }: { state: HydratedGameState; p
       <div className="p-4 border-t border-white/10 flex gap-6 justify-around bg-black/30">
         {state.teams.map(t => (
           <div key={t.id} className="flex items-center gap-3">
-            {t.logoUrl && <img src={t.logoUrl} alt="" className="w-14 h-14 rounded-full object-cover border-2 border-yellow-400/40" />}
+            {t.logoUrl && <img src={t.logoUrl} alt="" className="w-16 h-12 rounded-lg object-cover border-2 border-yellow-400/40" />}
             <div>
               <div className="font-semibold text-lg">{t.name}</div>
               <div className="text-yellow-400 text-3xl font-bold">{state.scores[t.id]}</div>

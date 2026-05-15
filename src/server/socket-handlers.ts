@@ -109,6 +109,49 @@ export function registerSocketHandlers(io: Server) {
     );
 
     socket.on(
+      "host:update-team",
+      (
+        input: { id: string; name?: string; logoUrl?: string | null },
+        cb?: (t: Team | null) => void
+      ) => {
+        const lib = teamStore.get();
+        const idx = lib.teams.findIndex(t => t.id === input.id);
+        if (idx < 0) { cb?.(null); return; }
+        const prev = lib.teams[idx];
+        const next: Team = {
+          ...prev,
+          name: input.name !== undefined ? input.name : prev.name,
+          logoUrl:
+            input.logoUrl === null
+              ? undefined
+              : input.logoUrl !== undefined
+                ? input.logoUrl
+                : prev.logoUrl,
+        };
+        const teams = [...lib.teams];
+        teams[idx] = next;
+        teamStore.set({ teams });
+        io.emit("teams", teamStore.get().teams);
+        cb?.(next);
+      }
+    );
+
+    socket.on(
+      "host:delete-team",
+      (input: { id: string }, cb?: (r: { ok: boolean; reason?: string }) => void) => {
+        const game = gameStore.get();
+        if (game && game.teamIds.includes(input.id)) {
+          cb?.({ ok: false, reason: "team is in active game" });
+          return;
+        }
+        const lib = teamStore.get();
+        teamStore.set({ teams: lib.teams.filter(t => t.id !== input.id) });
+        io.emit("teams", teamStore.get().teams);
+        cb?.({ ok: true });
+      }
+    );
+
+    socket.on(
       "host:create-game",
       (input: { packId: string; settings: Settings; teamIds: string[] }) => {
         const pack = getPack(input.packId);
