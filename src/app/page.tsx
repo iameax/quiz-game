@@ -1,3 +1,2 @@
-export default function HostPage() {
-  return <main className="p-8">Загрузка...</main>;
-}
+import { HostApp } from "@/components/HostApp";
+export default function Page() { return <HostApp />; }
