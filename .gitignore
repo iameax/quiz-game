@@ -11,3 +11,6 @@ build/
 data/game.json
 data/teams.json
 public/uploads/teams/
+
+# local screenshots
+/spectator*.png
