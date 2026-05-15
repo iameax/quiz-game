@@ -1,4 +1,19 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
-html, body { background: #0a1a3a; color: white; min-height: 100vh; }
+:root {
+  --bg: #0b1437;
+  --bg-elevated: #142150;
+  --accent: #ffc93c;
+  --accent-soft: #fcd34d;
+  --text-muted: #94a3b8;
+}
+
+html, body {
+  background: radial-gradient(ellipse at top, #142150 0%, #0b1437 55%, #070d24 100%);
+  background-attachment: fixed;
+  color: white;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
