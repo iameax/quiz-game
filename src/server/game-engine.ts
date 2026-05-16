@@ -41,12 +41,11 @@ export function selectQuestion(
 ): GameState {
   if (state.phase !== "board") throw new Error("not on board phase");
   const key = `${q.catIdx}_${q.valIdx}`;
-  if (!(key in state.board)) throw new Error("invalid cell");
-  if (state.board[key] === "used") throw new Error("cell already used");
   const cat = pack.categories[q.catIdx];
   if (!cat) throw new Error("invalid category");
   const question = cat.questions[q.valIdx];
   if (!question) throw new Error("invalid question");
+  if (state.board[key] === "used") throw new Error("cell already used");
   return {
     ...state,
     phase: "question",
@@ -56,6 +55,18 @@ export function selectQuestion(
       value: question.value,
       timerState: "idle",
       attempts: [],
+      answerRevealed: false,
+    },
+  };
+}
+
+export function toggleAnswer(state: GameState): GameState {
+  if (!state.currentQuestion) throw new Error("no current question");
+  return {
+    ...state,
+    currentQuestion: {
+      ...state.currentQuestion,
+      answerRevealed: !state.currentQuestion.answerRevealed,
     },
   };
 }
@@ -78,13 +89,19 @@ export function expireTimer(state: GameState): GameState {
   };
 }
 
+export function setScore(state: GameState, teamId: string, score: number): GameState {
+  if (!state.teamIds.includes(teamId)) throw new Error("unknown team");
+  return {
+    ...state,
+    scores: { ...state.scores, [teamId]: Math.trunc(score) },
+  };
+}
+
 export function markAnswer(state: GameState, a: Attempt): GameState {
   if (!state.currentQuestion) throw new Error("no current question");
   if (!state.teamIds.includes(a.teamId)) throw new Error("unknown team");
   const value = state.currentQuestion.value;
-  const delta = a.result === "correct"
-    ? value
-    : -Math.floor((value * state.settings.penaltyPct) / 100);
+  const delta = Math.trunc((value * a.pct) / 100);
   return {
     ...state,
     scores: { ...state.scores, [a.teamId]: state.scores[a.teamId] + delta },
@@ -95,11 +112,13 @@ export function markAnswer(state: GameState, a: Attempt): GameState {
   };
 }
 
-export function finishQuestion(state: GameState): GameState {
+export function finishQuestion(state: GameState, pack: Pack): GameState {
   if (!state.currentQuestion) throw new Error("no current question");
   const key = `${state.currentQuestion.catIdx}_${state.currentQuestion.valIdx}`;
   const board = { ...state.board, [key]: "used" as const };
-  const allUsed = Object.values(board).every(v => v === "used");
+  const totalCells = pack.categories.reduce((sum, c) => sum + c.questions.length, 0);
+  const usedCells = Object.values(board).filter(v => v === "used").length;
+  const allUsed = usedCells >= totalCells;
   return {
     ...state,
     board,

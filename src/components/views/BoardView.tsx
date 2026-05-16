@@ -9,6 +9,8 @@ export function BoardView({ state, pack, isHost }: { state: HydratedGameState; p
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [roundTimeSec, setRoundTimeSec] = useState(state.settings.roundTimeSec);
   const [penaltyPct, setPenaltyPct] = useState(state.settings.penaltyPct);
+  const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
+  const [editScore, setEditScore] = useState("");
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -48,6 +50,21 @@ export function BoardView({ state, pack, isHost }: { state: HydratedGameState; p
     setSettingsOpen(false);
     setMenuOpen(false);
   };
+
+  const startEditScore = (teamId: string) => {
+    if (!isHost) return;
+    setEditingTeamId(teamId);
+    setEditScore(String(state.scores[teamId] ?? 0));
+  };
+  const commitEditScore = () => {
+    if (!editingTeamId) return;
+    const n = Number(editScore);
+    if (Number.isFinite(n)) {
+      getSocket("host").emit("host:set-score", { teamId: editingTeamId, score: Math.trunc(n) });
+    }
+    setEditingTeamId(null);
+  };
+  const cancelEditScore = () => setEditingTeamId(null);
 
   const numCols = pack.categories[0].questions.length;
 
@@ -211,7 +228,28 @@ export function BoardView({ state, pack, isHost }: { state: HydratedGameState; p
             {t.logoUrl && <img src={t.logoUrl} alt="" className="w-16 h-12 rounded-lg object-cover border-2 border-yellow-400/40" />}
             <div>
               <div className="font-semibold text-lg">{t.name}</div>
-              <div className="text-yellow-400 text-3xl font-bold">{state.scores[t.id]}</div>
+              {editingTeamId === t.id ? (
+                <input
+                  type="number"
+                  autoFocus
+                  value={editScore}
+                  onChange={e => setEditScore(e.target.value)}
+                  onBlur={commitEditScore}
+                  onKeyDown={e => {
+                    if (e.key === "Enter") { e.preventDefault(); commitEditScore(); }
+                    else if (e.key === "Escape") { e.preventDefault(); cancelEditScore(); }
+                  }}
+                  className="w-28 bg-white/10 border border-amber-400/60 text-yellow-400 text-3xl font-bold rounded px-2 py-0.5 focus:outline-none focus:border-amber-400"
+                />
+              ) : (
+                <div
+                  onDoubleClick={() => startEditScore(t.id)}
+                  title={isHost ? "Двойной клик: изменить" : undefined}
+                  className={`text-yellow-400 text-3xl font-bold ${isHost ? "cursor-pointer select-none" : ""}`}
+                >
+                  {state.scores[t.id]}
+                </div>
+              )}
             </div>
           </div>
         ))}

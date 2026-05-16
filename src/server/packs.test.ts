@@ -12,7 +12,7 @@ const valid = {
       name: "Cat",
       questions: [
         { value: 100, question: "Q", answer: "A" },
-        { value: 200, question: "Q2", answer: "A2", image: "/x.png", audio: "/y.mp3" },
+        { value: 200, question: ["Q2"], answer: "A2", image: "/x.png", audio: "/y.mp3" },
       ],
     },
   ],

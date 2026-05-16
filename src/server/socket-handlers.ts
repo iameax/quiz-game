@@ -1,12 +1,14 @@
 import type { Server, Socket } from "socket.io";
 import { randomUUID } from "crypto";
-import { packs, teamStore, gameStore, hostState, timers } from "./context";
+import { getPacks, teamStore, gameStore, hostState, timers } from "./context";
 import {
   createGame,
   selectQuestion,
   startTimer,
   expireTimer,
   markAnswer,
+  setScore,
+  toggleAnswer,
   finishQuestion,
   audioPlay,
   audioPause,
@@ -15,7 +17,7 @@ import {
 import type { Settings, SoundKind, Team } from "@/lib/types";
 
 function getPack(packId: string) {
-  const p = packs.find(p => p.id === packId);
+  const p = getPacks().find(p => p.id === packId);
   if (!p) throw new Error("pack not found");
   return p;
 }
@@ -63,7 +65,7 @@ function emitState(socket: Socket) {
 }
 
 function emitPacks(socket: Socket) {
-  socket.emit("packs", packs.map(p => ({ id: p.id, name: p.name })));
+  socket.emit("packs", getPacks().map(p => ({ id: p.id, name: p.name })));
 }
 
 function emitTeams(socket: Socket) {
@@ -183,18 +185,25 @@ export function registerSocketHandlers(io: Server) {
       setExpiryTimer(io);
     });
 
-    socket.on("host:mark-answer", (input: { teamId: string; result: "correct" | "wrong" }) => {
+    socket.on("host:mark-answer", (input: { teamId: string; pct: number }) => {
       const s = gameStore.get(); if (!s) return;
       const next = markAnswer(s, input);
       gameStore.set(next);
       broadcast(io);
-      broadcastSound(io, input.result);
+      broadcastSound(io, input.pct >= 0 ? "correct" : "wrong");
+    });
+
+    socket.on("host:toggle-answer", () => {
+      const s = gameStore.get(); if (!s) return;
+      const next = toggleAnswer(s);
+      gameStore.set(next);
+      broadcast(io);
     });
 
     socket.on("host:finish-question", () => {
       const s = gameStore.get(); if (!s) return;
       if (timers.current) { clearTimeout(timers.current); timers.current = null; }
-      const next = finishQuestion(s);
+      const next = finishQuestion(s, getPack(s.packId));
       gameStore.set(next);
       broadcast(io);
     });
@@ -209,6 +218,13 @@ export function registerSocketHandlers(io: Server) {
     socket.on("host:audio-pause", (input: { positionSec: number }) => {
       const s = gameStore.get(); if (!s) return;
       const next = audioPause(s, input);
+      gameStore.set(next);
+      broadcast(io);
+    });
+
+    socket.on("host:set-score", (input: { teamId: string; score: number }) => {
+      const s = gameStore.get(); if (!s) return;
+      const next = setScore(s, input.teamId, input.score);
       gameStore.set(next);
       broadcast(io);
     });

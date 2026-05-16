@@ -5,7 +5,6 @@ import { BoardView } from "./views/BoardView";
 import { QuestionView } from "./views/QuestionView";
 import { ResultsView } from "./views/ResultsView";
 import { SoundEffects } from "./SoundEffects";
-import { AutoplayGate } from "./AutoplayGate";
 import type { Pack } from "@/lib/types";
 
 export function SpectatorApp() {
@@ -19,7 +18,7 @@ export function SpectatorApp() {
   }, [state?.packId]);
 
   return (
-    <AutoplayGate>
+    <>
       <SoundEffects />
       {!state && <main className="min-h-screen flex items-center justify-center text-2xl">Ожидание игры...</main>}
       {state && !pack && <main className="p-8">Загрузка...</main>}
@@ -29,6 +28,6 @@ export function SpectatorApp() {
       {state && state.phase === "creating" && (
         <main className="min-h-screen flex items-center justify-center text-2xl">Игра создаётся...</main>
       )}
-    </AutoplayGate>
+    </>
   );
 }

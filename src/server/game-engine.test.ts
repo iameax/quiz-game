@@ -72,6 +72,7 @@ describe("selectQuestion", () => {
       value: 200,
       timerState: "idle",
       attempts: [],
+      answerRevealed: false,
     });
   });
 
@@ -120,38 +121,44 @@ describe("markAnswer", () => {
   const base = createGame({ packId: "p1", pack, settings: { roundTimeSec: 60, penaltyPct: 50 }, teamIds: ["t1", "t2"] });
   const open = selectQuestion(base, { catIdx: 0, valIdx: 1 }, pack); // value 200
 
-  test("correct: adds full value to team, records attempt", () => {
-    const next = markAnswer(open, { teamId: "t1", result: "correct" });
+  test("+100%: adds full value to team, records attempt", () => {
+    const next = markAnswer(open, { teamId: "t1", pct: 100 });
     expect(next.scores.t1).toBe(200);
-    expect(next.currentQuestion?.attempts).toEqual([{ teamId: "t1", result: "correct" }]);
+    expect(next.currentQuestion?.attempts).toEqual([{ teamId: "t1", pct: 100 }]);
   });
 
-  test("wrong: subtracts penaltyPct% of value, records attempt", () => {
-    const next = markAnswer(open, { teamId: "t1", result: "wrong" });
-    expect(next.scores.t1).toBe(-100); // 50% of 200
-    expect(next.currentQuestion?.attempts).toEqual([{ teamId: "t1", result: "wrong" }]);
+  test("-50%: subtracts 50% of value, records attempt", () => {
+    const next = markAnswer(open, { teamId: "t1", pct: -50 });
+    expect(next.scores.t1).toBe(-100);
+    expect(next.currentQuestion?.attempts).toEqual([{ teamId: "t1", pct: -50 }]);
   });
 
-  test("steals: multiple wrongs then correct accumulate", () => {
-    let s = markAnswer(open, { teamId: "t1", result: "wrong" });
-    s = markAnswer(s, { teamId: "t2", result: "correct" });
-    expect(s.scores).toEqual({ t1: -100, t2: 200 });
+  test("+75% partial credit", () => {
+    const next = markAnswer(open, { teamId: "t1", pct: 75 });
+    expect(next.scores.t1).toBe(150);
+  });
+
+  test("accumulates across multiple attempts", () => {
+    let s = markAnswer(open, { teamId: "t1", pct: -25 });
+    s = markAnswer(s, { teamId: "t2", pct: 100 });
+    expect(s.scores).toEqual({ t1: -50, t2: 200 });
     expect(s.currentQuestion?.attempts.length).toBe(2);
   });
 
   test("throws if no current question", () => {
-    expect(() => markAnswer(base, { teamId: "t1", result: "correct" })).toThrow();
+    expect(() => markAnswer(base, { teamId: "t1", pct: 100 })).toThrow();
   });
 
   test("throws if team not in game", () => {
-    expect(() => markAnswer(open, { teamId: "tx", result: "correct" })).toThrow();
+    expect(() => markAnswer(open, { teamId: "tx", pct: 100 })).toThrow();
   });
 
-  test("rounds penalty down on fractional %", () => {
+  test("truncates fractional delta toward zero", () => {
     const open100 = selectQuestion(base, { catIdx: 0, valIdx: 0 }, pack); // value 100
-    const customPenalty = { ...open100, settings: { ...open100.settings, penaltyPct: 33 } };
-    const next = markAnswer(customPenalty, { teamId: "t1", result: "wrong" });
-    expect(next.scores.t1).toBe(-33);
+    const neg = markAnswer(open100, { teamId: "t1", pct: -25 });
+    expect(neg.scores.t1).toBe(-25);
+    const pos = markAnswer(open100, { teamId: "t1", pct: 75 });
+    expect(pos.scores.t1).toBe(75);
   });
 });
 
@@ -159,7 +166,7 @@ describe("finishQuestion", () => {
   test("marks cell used, returns to board if cells remain", () => {
     const base = createGame({ packId: "p1", pack, settings: { roundTimeSec: 60, penaltyPct: 50 }, teamIds: ["t1"] });
     const open = selectQuestion(base, { catIdx: 0, valIdx: 0 }, pack);
-    const next = finishQuestion(open);
+    const next = finishQuestion(open, pack);
     expect(next.phase).toBe("board");
     expect(next.currentQuestion).toBeNull();
     expect(next.board["0_0"]).toBe("used");
@@ -170,14 +177,14 @@ describe("finishQuestion", () => {
     const cells: [number, number][] = [[0,0],[0,1],[1,0],[1,1]];
     for (const [c, v] of cells) {
       s = selectQuestion(s, { catIdx: c, valIdx: v }, pack);
-      s = finishQuestion(s);
+      s = finishQuestion(s, pack);
     }
     expect(s.phase).toBe("results");
   });
 
   test("throws if no current question", () => {
     const base = createGame({ packId: "p1", pack, settings: { roundTimeSec: 60, penaltyPct: 50 }, teamIds: ["t1"] });
-    expect(() => finishQuestion(base)).toThrow();
+    expect(() => finishQuestion(base, pack)).toThrow();
   });
 });
 

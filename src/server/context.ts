@@ -6,7 +6,7 @@ import type { GameState, TeamLibrary } from "@/lib/types";
 const dataDir = path.join(process.cwd(), "data");
 const packsDir = path.join(dataDir, "packs");
 
-export const packs = loadPacksFromDir(packsDir);
+export const getPacks = () => loadPacksFromDir(packsDir);
 
 export const teamStore = createStore<TeamLibrary>({
   file: path.join(dataDir, "teams.json"),

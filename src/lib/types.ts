@@ -5,8 +5,9 @@ export type QuestionMedia = {
 
 export type Question = {
   value: number;
-  question: string;
-  answer: string;
+  question: string | string[];
+  answer: string | string[];
+  comment?: string;
 } & QuestionMedia;
 
 export type Category = {
@@ -36,7 +37,7 @@ export type Settings = {
   penaltyPct: number;
 };
 
-export type Attempt = { teamId: string; result: "correct" | "wrong" };
+export type Attempt = { teamId: string; pct: number };
 
 export type AudioState = {
   playing: boolean;
@@ -52,6 +53,7 @@ export type CurrentQuestion = {
   timerStartedAt?: number;
   attempts: Attempt[];
   audioState?: AudioState;
+  answerRevealed: boolean;
 };
 
 export type Phase = "creating" | "board" | "question" | "results";

@@ -5,8 +5,9 @@ import type { Pack } from "@/lib/types";
 
 const QuestionSchema = z.object({
   value: z.number().int().positive(),
-  question: z.string().min(1),
-  answer: z.string().min(1),
+  question: z.union([z.string().min(1), z.array(z.string()).min(1)]),
+  answer: z.union([z.string().min(1), z.array(z.string()).min(1)]),
+  comment: z.string().optional(),
   image: z.string().optional(),
   audio: z.string().optional(),
 });
