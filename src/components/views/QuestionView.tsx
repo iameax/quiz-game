@@ -116,11 +116,11 @@ export function QuestionView({ state, pack, isHost }: { state: HydratedGameState
       >
         {cq.answerRevealed ? (
           <>
-            <div className="text-white-90 underline underline-offset-4 uppercase tracking-[0.25em] font-semibold text-2xl mb-6 -translate-y-20">Ответ</div>
-            <Markdown className="text-white [&_p]:text-4xl! [&_p]:font-medium [&_p]:leading-tight! [&_p]:tracking-tight! [&_h1]:text-7xl! [&_h1]:font-semibold! [&_h1]:leading-tight! [&_h2]:!text-6xl [&_h2]:!font-semibold [&_h2]:!leading-tight [&_h3]:!text-5xl [&_h3]:!font-semibold [&_h3]:!leading-tight [&_h4]:!text-4xl [&_h4]:!font-semibold [&_strong]:!text-amber-300 [&_strong]:!font-semibold">{Array.isArray(q.answer) ? q.answer.join("\n") : q.answer}</Markdown>
+            <div className="text-white-90 underline underline-offset-4 uppercase tracking-[0.25em] font-semibold text-2xl mb-6">Ответ</div>
+            <Markdown className="text-white [&_p]:mb-4 [&_p]:text-4xl! [&_p]:font-medium [&_p]:leading-tight! [&_p]:tracking-tight! [&_h1]:text-7xl! [&_h1]:font-semibold! [&_h1]:leading-tight! [&_h2]:!text-6xl [&_h2]:!font-semibold [&_h2]:!leading-tight [&_h3]:!text-5xl [&_h3]:!font-semibold [&_h3]:!leading-tight [&_h4]:!text-4xl [&_h4]:!font-semibold [&_strong]:!text-amber-300 [&_strong]:!font-semibold">{Array.isArray(q.answer) ? q.answer.join("\n") : q.answer}</Markdown>
           </>
         ) : (
-          <Markdown className="text-white [&_p]:text-4xl! [&_p]:font-medium [&_p]:leading-tight! [&_p]:tracking-tight! [&_h1]:text-7xl! [&_h1]:font-semibold! [&_h1]:leading-tight! [&_h2]:!text-6xl [&_h2]:!font-semibold [&_h2]:!leading-tight [&_h3]:!text-5xl [&_h3]:!font-semibold [&_h3]:!leading-tight [&_h4]:!text-4xl [&_h4]:!font-semibold [&_strong]:!text-amber-300 [&_strong]:!font-semibold">{Array.isArray(q.question) ? q.question.join("\n") : q.question}</Markdown>
+          <Markdown className="text-white [&_p]:mb-4 [&_p]:text-4xl! [&_p]:font-medium [&_p]:leading-tight! [&_p]:tracking-tight! [&_h1]:text-7xl! [&_h1]:font-semibold! [&_h1]:leading-tight! [&_h2]:!text-6xl [&_h2]:!font-semibold [&_h2]:!leading-tight [&_h3]:!text-5xl [&_h3]:!font-semibold [&_h3]:!leading-tight [&_h4]:!text-4xl [&_h4]:!font-semibold [&_strong]:!text-amber-300 [&_strong]:!font-semibold">{Array.isArray(q.question) ? q.question.join("\n") : q.question}</Markdown>
         )}
       </div>
 
