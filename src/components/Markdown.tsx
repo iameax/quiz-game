@@ -6,7 +6,7 @@ import rehypeSanitize from "rehype-sanitize";
 
 export function Markdown({ children, className }: { children: string; className?: string }) {
   return (
-    <div className={`prose prose-invert max-w-none ${className ?? ""}`}>
+    <div className={`prose prose-invert max-w-[80%] ${className ?? ""}`}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkBreaks]}
         rehypePlugins={[rehypeSanitize]}
@@ -21,8 +21,18 @@ export function Markdown({ children, className }: { children: string; className?
               {children}
             </span>
           ),
+          h4: ({ children }) => (
+            <span className="block text-white text-2xl font-normal mt-2 tracking-wider">
+              {children}
+            </span>
+          ),
+          h5: ({ children }) => (
+            <span className="block text-white text-xl font-normal mt-3 tracking-wider">
+              {children}
+            </span>
+          ),
           h6: ({ children }) => (
-            <span className="block text-neutral-300 text-lg font-normal mt-3 tracking-wider">
+            <span className="text-neutral-300 text-md font-normal mt-3 tracking-wider border-b inline-block">
               {children}
             </span>
           ),

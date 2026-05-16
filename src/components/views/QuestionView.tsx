@@ -5,6 +5,16 @@ import type { HydratedGameState, Pack } from "@/lib/types";
 import { Markdown } from "@/components/Markdown";
 import { TimerBar } from "@/components/TimerBar";
 
+function stripMarkdown(s: string): string {
+  return s
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/__(.+?)__/g, "$1")
+    .replace(/(?<!\*)\*(?!\*)([^*\n]+?)\*(?!\*)/g, "$1")
+    .replace(/(?<!_)_(?!_)([^_\n]+?)_(?!_)/g, "$1")
+    .replace(/`([^`]+)`/g, "$1");
+}
+
 export function QuestionView({ state, pack, isHost }: { state: HydratedGameState; pack: Pack; isHost: boolean }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const cq = state.currentQuestion;
@@ -154,8 +164,8 @@ export function QuestionView({ state, pack, isHost }: { state: HydratedGameState
                 {cq.answerRevealed ? "Скрыть ответ" : "Показать ответ"}
               </button>
             </div>
-            <div className="text-white/95">
-              <Markdown>{Array.isArray(q.answer) ? q.answer.join("\n") : q.answer}</Markdown>
+            <div className="text-white/95 whitespace-pre-line">
+              {stripMarkdown(Array.isArray(q.answer) ? q.answer.join("\n") : q.answer)}
             </div>
           </div>
 
