@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useGameClient } from "@/lib/use-socket";
+import { WelcomeView } from "./views/WelcomeView";
 import { BoardView } from "./views/BoardView";
 import { QuestionView } from "./views/QuestionView";
 import { ResultsView } from "./views/ResultsView";
@@ -22,6 +23,7 @@ export function SpectatorApp() {
       <SoundEffects />
       {!state && <main className="min-h-screen flex items-center justify-center text-2xl">Ожидание игры...</main>}
       {state && !pack && <main className="p-8">Загрузка...</main>}
+      {state && pack && state.phase === "welcome" && <WelcomeView state={state} pack={pack} isHost={false} />}
       {state && pack && state.phase === "board" && <BoardView state={state} pack={pack} isHost={false} />}
       {state && pack && state.phase === "question" && <QuestionView state={state} pack={pack} isHost={false} />}
       {state && pack && state.phase === "results" && <ResultsView state={state} isHost={false} />}

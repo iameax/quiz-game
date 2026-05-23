@@ -37,7 +37,7 @@ export type Settings = {
   penaltyPct: number;
 };
 
-export type Attempt = { teamId: string; pct: number };
+export type Attempt = { teamId: string; pct: number; flat?: number };
 
 export type AudioState = {
   playing: boolean;
@@ -57,7 +57,7 @@ export type CurrentQuestion = {
   answerRevealed: boolean;
 };
 
-export type Phase = "creating" | "board" | "question" | "results";
+export type Phase = "creating" | "welcome" | "board" | "question" | "results";
 
 export type GameState = {
   id: string;
@@ -68,6 +68,7 @@ export type GameState = {
   board: Record<string, "unused" | "used">;
   currentQuestion: CurrentQuestion | null;
   phase: Phase;
+  welcomeStep?: number;
 };
 
 export type HydratedGameState = Omit<GameState, "teamIds"> & {

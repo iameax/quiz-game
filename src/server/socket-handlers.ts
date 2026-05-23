@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import { getPacks, teamStore, gameStore, hostState, timers } from "./context";
 import {
   createGame,
+  welcomeAdvance,
   selectQuestion,
   startTimer,
   pauseTimer,
@@ -158,7 +159,7 @@ export function registerSocketHandlers(io: Server) {
 
     socket.on(
       "host:create-game",
-      (input: { packId: string; settings: Settings; teamIds: string[] }) => {
+      (input: { packId: string; settings: Settings; teamIds: string[]; skipWelcome?: boolean }) => {
         const pack = getPack(input.packId);
         const game = createGame({
           packId: input.packId,
@@ -166,11 +167,27 @@ export function registerSocketHandlers(io: Server) {
           settings: input.settings,
           teamIds: input.teamIds,
         });
-        gameStore.set(game);
-        broadcast(io);
-        broadcastSound(io, "intro");
+        if (input.skipWelcome) {
+          const { welcomeStep: _w, ...rest } = game;
+          gameStore.set({ ...rest, phase: "board" });
+          broadcast(io);
+          broadcastSound(io, "intro");
+        } else {
+          gameStore.set(game);
+          broadcast(io);
+        }
       }
     );
+
+    socket.on("host:welcome-advance", () => {
+      const s = gameStore.get(); if (!s) return;
+      if (s.phase !== "welcome") return;
+      const pack = getPack(s.packId);
+      const next = welcomeAdvance(s, pack);
+      gameStore.set(next);
+      broadcast(io);
+      if (s.phase === "welcome" && next.phase === "board") broadcastSound(io, "intro");
+    });
 
     socket.on("host:select-question", (input: { catIdx: number; valIdx: number }) => {
       const s = gameStore.get(); if (!s) return;
@@ -213,19 +230,24 @@ export function registerSocketHandlers(io: Server) {
       setExpiryTimer(io);
     });
 
-    socket.on("host:mark-answer", (input: { teamId: string; pct: number }) => {
+    socket.on("host:mark-answer", (input: { teamId: string; pct: number; flat?: number }) => {
       const s = gameStore.get(); if (!s) return;
       const next = markAnswer(s, input);
       gameStore.set(next);
       broadcast(io);
-      broadcastSound(io, input.pct >= 0 ? "correct" : "wrong");
+      const negative = input.flat !== undefined ? input.flat < 0 : input.pct < 0;
+      broadcastSound(io, negative ? "wrong" : "correct");
     });
 
     socket.on("host:toggle-answer", () => {
       const s = gameStore.get(); if (!s) return;
       const wasRevealed = s.currentQuestion?.answerRevealed ?? false;
       const hasCorrect = (s.currentQuestion?.attempts ?? []).some(a => a.pct > 0);
-      const next = toggleAnswer(s);
+      let next = toggleAnswer(s);
+      if (!wasRevealed && next.currentQuestion?.timerState === "running") {
+        next = pauseTimer(next, Date.now());
+        if (timers.current) { clearTimeout(timers.current); timers.current = null; }
+      }
       gameStore.set(next);
       broadcast(io);
       if (!wasRevealed && !hasCorrect) broadcastSound(io, "noanswer");

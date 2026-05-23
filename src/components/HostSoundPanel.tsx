@@ -37,7 +37,7 @@ export function HostSoundPanel() {
           className="relative w-12 h-12 flex items-center justify-center text-2xl bg-white/5 hover:bg-white/15 border border-white/10 hover:border-white/30 rounded-lg transition cursor-pointer"
         >
           {s.icon}
-          <span className="absolute -top-1 -right-1 text-[10px] leading-none px-1 py-0.5 bg-amber-400 text-slate-900 rounded font-bold">
+          <span className="absolute top-0 right-0 text-[10px] leading-none px-1 py-0.5 text-white rounded font-bold">
             {i + 1}
           </span>
         </button>

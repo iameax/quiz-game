@@ -2,10 +2,12 @@
 import { useEffect, useState } from "react";
 import { useGameClient } from "@/lib/use-socket";
 import { CreateView } from "./views/CreateView";
+import { WelcomeView } from "./views/WelcomeView";
 import { BoardView } from "./views/BoardView";
 import { QuestionView } from "./views/QuestionView";
 import { ResultsView } from "./views/ResultsView";
 import { HostSoundPanel } from "./HostSoundPanel";
+import { HostMenu } from "./HostMenu";
 import type { Pack } from "@/lib/types";
 
 export function HostApp() {
@@ -23,10 +25,12 @@ export function HostApp() {
   if (!pack) return <main className="p-8">Загрузка пакета...</main>;
   return (
     <>
+      {state.phase === "welcome" && <WelcomeView state={state} pack={pack} isHost />}
       {state.phase === "board" && <BoardView state={state} pack={pack} isHost />}
       {state.phase === "question" && <QuestionView state={state} pack={pack} isHost />}
       {state.phase === "results" && <ResultsView state={state} isHost />}
-      <HostSoundPanel />
+      {(state.phase === "welcome" || state.phase === "board") && <HostMenu state={state} />}
+      {(state.phase === "board" || state.phase === "question") && <HostSoundPanel />}
     </>
   );
 }

@@ -24,12 +24,13 @@ export function CreateView({ packs, teams }: {
     setSelected(next);
   };
 
-  const submit = () => {
+  const submit = (skipWelcome = false) => {
     if (!packId || selected.size < 2) return;
     getSocket("host").emit("host:create-game", {
       packId,
       settings: { roundTimeSec, penaltyPct },
       teamIds: Array.from(selected),
+      skipWelcome,
     });
   };
 
@@ -265,13 +266,22 @@ export function CreateView({ packs, teams }: {
         )}
       </section>
 
-      <button
-        onClick={submit}
-        disabled={!packId || selected.size < 2}
-        className="px-8 py-4 bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold text-xl rounded-lg disabled:opacity-30 disabled:hover:bg-amber-400 shadow-[0_0_28px_rgba(255,201,60,0.35)] transition"
-      >
-        Начать игру
-      </button>
+      <div className="flex gap-3 flex-wrap">
+        <button
+          onClick={() => submit(false)}
+          disabled={!packId || selected.size < 2}
+          className="px-8 py-4 bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold text-xl rounded-lg disabled:opacity-30 disabled:hover:bg-amber-400 shadow-[0_0_28px_rgba(255,201,60,0.35)] transition"
+        >
+          Начать игру
+        </button>
+        <button
+          onClick={() => submit(true)}
+          disabled={!packId || selected.size < 2}
+          className="px-6 py-4 border border-white/20 hover:border-amber-400 hover:text-amber-300 text-white/80 font-medium text-lg rounded-lg disabled:opacity-30 transition"
+        >
+          Пропустить вступление
+        </button>
+      </div>
     </main>
   );
 }

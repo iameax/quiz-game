@@ -12,7 +12,9 @@ import {
   audioPause,
   hydrateState,
 } from "./game-engine";
-import type { Pack } from "@/lib/types";
+import type { GameState, Pack } from "@/lib/types";
+
+const onBoard = (g: GameState): GameState => ({ ...g, phase: "board", welcomeStep: undefined });
 
 const pack: Pack = {
   id: "p1",
@@ -36,14 +38,15 @@ const pack: Pack = {
 };
 
 describe("createGame", () => {
-  test("builds initial state with phase=board", () => {
+  test("builds initial state with phase=welcome", () => {
     const game = createGame({
       packId: pack.id,
       pack,
       settings: { roundTimeSec: 60, penaltyPct: 50 },
       teamIds: ["t1", "t2"],
     });
-    expect(game.phase).toBe("board");
+    expect(game.phase).toBe("welcome");
+    expect(game.welcomeStep).toBe(0);
     expect(game.packId).toBe("p1");
     expect(game.teamIds).toEqual(["t1", "t2"]);
     expect(game.scores).toEqual({ t1: 0, t2: 0 });
@@ -58,12 +61,12 @@ describe("createGame", () => {
 });
 
 describe("selectQuestion", () => {
-  const base = createGame({
+  const base = onBoard(createGame({
     packId: "p1",
     pack,
     settings: { roundTimeSec: 60, penaltyPct: 50 },
     teamIds: ["t1"],
-  });
+  }));
 
   test("opens question, phase=question, timer idle, no attempts", () => {
     const next = selectQuestion(base, { catIdx: 0, valIdx: 1 }, pack);
@@ -95,7 +98,7 @@ describe("selectQuestion", () => {
 });
 
 describe("timer", () => {
-  const base = createGame({ packId: "p1", pack, settings: { roundTimeSec: 60, penaltyPct: 50 }, teamIds: ["t1"] });
+  const base = onBoard(createGame({ packId: "p1", pack, settings: { roundTimeSec: 60, penaltyPct: 50 }, teamIds: ["t1"] }));
   const opened = selectQuestion(base, { catIdx: 0, valIdx: 0 }, pack);
 
   test("startTimer sets running with startedAt", () => {
@@ -154,7 +157,7 @@ describe("timer", () => {
 });
 
 describe("markAnswer", () => {
-  const base = createGame({ packId: "p1", pack, settings: { roundTimeSec: 60, penaltyPct: 50 }, teamIds: ["t1", "t2"] });
+  const base = onBoard(createGame({ packId: "p1", pack, settings: { roundTimeSec: 60, penaltyPct: 50 }, teamIds: ["t1", "t2"] }));
   const open = selectQuestion(base, { catIdx: 0, valIdx: 1 }, pack); // value 200
 
   test("+100%: adds full value to team, records attempt", () => {
@@ -200,7 +203,7 @@ describe("markAnswer", () => {
 
 describe("finishQuestion", () => {
   test("marks cell used, returns to board if cells remain", () => {
-    const base = createGame({ packId: "p1", pack, settings: { roundTimeSec: 60, penaltyPct: 50 }, teamIds: ["t1"] });
+    const base = onBoard(createGame({ packId: "p1", pack, settings: { roundTimeSec: 60, penaltyPct: 50 }, teamIds: ["t1"] }));
     const open = selectQuestion(base, { catIdx: 0, valIdx: 0 }, pack);
     const next = finishQuestion(open, pack);
     expect(next.phase).toBe("board");
@@ -209,7 +212,7 @@ describe("finishQuestion", () => {
   });
 
   test("transitions to results when board is complete", () => {
-    let s = createGame({ packId: "p1", pack, settings: { roundTimeSec: 60, penaltyPct: 50 }, teamIds: ["t1"] });
+    let s = onBoard(createGame({ packId: "p1", pack, settings: { roundTimeSec: 60, penaltyPct: 50 }, teamIds: ["t1"] }));
     const cells: [number, number][] = [[0,0],[0,1],[1,0],[1,1]];
     for (const [c, v] of cells) {
       s = selectQuestion(s, { catIdx: c, valIdx: v }, pack);
@@ -219,13 +222,13 @@ describe("finishQuestion", () => {
   });
 
   test("throws if no current question", () => {
-    const base = createGame({ packId: "p1", pack, settings: { roundTimeSec: 60, penaltyPct: 50 }, teamIds: ["t1"] });
+    const base = onBoard(createGame({ packId: "p1", pack, settings: { roundTimeSec: 60, penaltyPct: 50 }, teamIds: ["t1"] }));
     expect(() => finishQuestion(base, pack)).toThrow();
   });
 });
 
 describe("audio", () => {
-  const base = createGame({ packId: "p1", pack, settings: { roundTimeSec: 60, penaltyPct: 50 }, teamIds: ["t1"] });
+  const base = onBoard(createGame({ packId: "p1", pack, settings: { roundTimeSec: 60, penaltyPct: 50 }, teamIds: ["t1"] }));
   const open = selectQuestion(base, { catIdx: 0, valIdx: 0 }, pack);
 
   test("audioPlay sets state.playing=true and startedAt", () => {

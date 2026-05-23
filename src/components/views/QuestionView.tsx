@@ -38,7 +38,7 @@ export function QuestionView({ state, pack, isHost }: { state: HydratedGameState
       } else if (e.code === "ArrowRight") {
         e.preventDefault();
         if (!cq.answerRevealed) s.emit("host:toggle-answer");
-      } else if (e.code === "Enter") {
+      } else if (e.code === "Enter" || e.code === "Escape") {
         e.preventDefault();
         s.emit("host:finish-question");
       }
@@ -81,13 +81,13 @@ export function QuestionView({ state, pack, isHost }: { state: HydratedGameState
   const lastAttempt = cq.attempts[cq.attempts.length - 1];
   const lastTeam = lastAttempt ? state.teams.find(t => t.id === lastAttempt.teamId) : null;
 
-  const SCORE_BUTTONS: { pct: number; label: string; tone: "pos" | "neg" }[] = [
+  const SCORE_BUTTONS: { pct: number; flat?: number; label: string; tone: "pos" | "neg" }[] = [
     { pct: 100, label: "+100%", tone: "pos" },
     { pct: 75, label: "+75%", tone: "pos" },
     { pct: 50, label: "+50%", tone: "pos" },
     { pct: 25, label: "+25%", tone: "pos" },
-    { pct: -25, label: "-25%", tone: "neg" },
-    { pct: -50, label: "-50%", tone: "neg" },
+    { pct: 0, flat: -50, label: "-50", tone: "neg" },
+    { pct: 0, flat: -100, label: "-100", tone: "neg" },
   ];
 
   return (
@@ -148,7 +148,9 @@ export function QuestionView({ state, pack, isHost }: { state: HydratedGameState
             <img src={lastTeam.logoUrl} alt="" className="w-16 h-12 rounded-lg object-cover border-2 border-amber-400/50 shadow-[0_0_18px_rgba(255,201,60,0.25)]" />
           )}
           <div className="text-3xl text-amber-300 font-bold" style={{ textShadow: "0 2px 12px rgba(255,201,60,0.35)" }}>
-            {lastTeam.name}: {lastAttempt.pct > 0 ? "+" : ""}{lastAttempt.pct}%
+            {lastTeam.name}: {lastAttempt.flat !== undefined
+              ? `${lastAttempt.flat > 0 ? "+" : ""}${lastAttempt.flat}`
+              : `${lastAttempt.pct > 0 ? "+" : ""}${lastAttempt.pct}%`}
           </div>
         </div>
       )}
@@ -207,9 +209,11 @@ export function QuestionView({ state, pack, isHost }: { state: HydratedGameState
                   </span>
                   {SCORE_BUTTONS.map(b => (
                     <button
-                      key={b.pct}
+                      key={b.label}
                       onClick={() => {
-                        sock().emit("host:mark-answer", { teamId: t.id, pct: b.pct });
+                        const payload: { teamId: string; pct: number; flat?: number } = { teamId: t.id, pct: b.pct };
+                        if (b.flat !== undefined) payload.flat = b.flat;
+                        sock().emit("host:mark-answer", payload);
                         if (b.pct === 100 && !cq.answerRevealed) sock().emit("host:toggle-answer");
                       }}
                       className={
@@ -230,9 +234,14 @@ export function QuestionView({ state, pack, isHost }: { state: HydratedGameState
             Попытки:{" "}
             {cq.attempts.map((a, i) => {
               const name = state.teams.find(t => t.id === a.teamId)?.name;
+              const isFlat = a.flat !== undefined;
+              const sign = isFlat ? a.flat! >= 0 : a.pct >= 0;
+              const label = isFlat
+                ? `${a.flat! > 0 ? "+" : ""}${a.flat}`
+                : `${a.pct > 0 ? "+" : ""}${a.pct}%`;
               return (
                 <span key={i} className="mr-2">
-                  {name}: <span className={a.pct >= 0 ? "text-emerald-400" : "text-rose-400"}>{a.pct > 0 ? "+" : ""}{a.pct}%</span>
+                  {name}: <span className={sign ? "text-emerald-400" : "text-rose-400"}>{label}</span>
                 </span>
               );
             })}

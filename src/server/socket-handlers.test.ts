@@ -88,7 +88,7 @@ describe("socket flow", () => {
     });
 
     const state = await spectatorState;
-    expect(state.phase).toBe("board");
+    expect(state.phase).toBe("welcome");
     expect(state.teams).toHaveLength(2);
   });
 

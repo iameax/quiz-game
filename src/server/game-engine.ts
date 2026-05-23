@@ -30,8 +30,20 @@ export function createGame(input: {
     scores,
     board,
     currentQuestion: null,
-    phase: "board",
+    phase: "welcome",
+    welcomeStep: 0,
   };
+}
+
+export function welcomeAdvance(state: GameState, pack: Pack): GameState {
+  if (state.phase !== "welcome") throw new Error("not on welcome phase");
+  const numCats = pack.categories.length;
+  const next = (state.welcomeStep ?? 0) + 1;
+  if (next > numCats) {
+    const { welcomeStep: _w, ...rest } = state;
+    return { ...rest, phase: "board" };
+  }
+  return { ...state, welcomeStep: next };
 }
 
 export function selectQuestion(
@@ -127,7 +139,7 @@ export function markAnswer(state: GameState, a: Attempt): GameState {
   if (!state.currentQuestion) throw new Error("no current question");
   if (!state.teamIds.includes(a.teamId)) throw new Error("unknown team");
   const value = state.currentQuestion.value;
-  const delta = Math.trunc((value * a.pct) / 100);
+  const delta = a.flat !== undefined ? Math.trunc(a.flat) : Math.trunc((value * a.pct) / 100);
   return {
     ...state,
     scores: { ...state.scores, [a.teamId]: state.scores[a.teamId] + delta },

@@ -24,9 +24,11 @@ function pickClockKey(value: number | undefined): "clock" | "clock2" {
 export function SoundEffects() {
   const audios = useRef<Record<string, HTMLAudioElement>>({});
   const clocks = useRef<Record<"clock" | "clock2", HTMLAudioElement | null>>({ clock: null, clock2: null });
+  const categoriesRef = useRef<HTMLAudioElement | null>(null);
   const activeClock = useRef<"clock" | "clock2" | null>(null);
   const unlocked = useRef(false);
   const wantClock = useRef(false);
+  const wantCategories = useRef(false);
   const prevTimerState = useRef<string | undefined>(undefined);
   const currentValue = useRef<number | undefined>(undefined);
   const [needsUnlock, setNeedsUnlock] = useState(false);
@@ -43,6 +45,12 @@ export function SoundEffects() {
       a.loop = true;
       clocks.current[k] = a;
     });
+    {
+      const a = new Audio("/sounds/categories.mp3");
+      a.preload = "auto";
+      a.loop = true;
+      categoriesRef.current = a;
+    }
 
     const s = getSocket("spectator");
     const handler = ({ kind }: { kind: string }) => {
@@ -64,6 +72,17 @@ export function SoundEffects() {
       });
     };
     const stateHandler = (state: HydratedGameState | null) => {
+      const inCategories = state?.phase === "welcome" && (state?.welcomeStep ?? 0) >= 1;
+      wantCategories.current = inCategories;
+      const cat = categoriesRef.current;
+      if (cat) {
+        if (inCategories) {
+          if (cat.paused) cat.play().catch(() => setNeedsUnlock(true));
+        } else if (!cat.paused) {
+          cat.pause();
+          cat.currentTime = 0;
+        }
+      }
       const ts = state?.currentQuestion?.timerState;
       const value = state?.currentQuestion?.value;
       currentValue.current = value;
@@ -99,6 +118,8 @@ export function SoundEffects() {
       s.off("sound", handler);
       s.off("state", stateHandler);
       stopAllClocks(false);
+      const cat = categoriesRef.current;
+      if (cat && !cat.paused) cat.pause();
     };
   }, []);
 
@@ -115,6 +136,12 @@ export function SoundEffects() {
         if (!wantClock.current || !isActive) { c.pause(); c.currentTime = 0; }
       }).catch(() => {});
     });
+    const cat = categoriesRef.current;
+    if (cat) {
+      cat.play().then(() => {
+        if (!wantCategories.current) { cat.pause(); cat.currentTime = 0; }
+      }).catch(() => {});
+    }
     setNeedsUnlock(false);
   };
 
