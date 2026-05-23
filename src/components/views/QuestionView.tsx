@@ -145,7 +145,7 @@ export function QuestionView({ state, pack, isHost }: { state: HydratedGameState
       {!isHost && lastAttempt && lastTeam && (
         <div className="flex items-center justify-center gap-4 mb-6">
           {lastTeam.logoUrl && (
-            <img src={lastTeam.logoUrl} alt="" className="w-16 h-12 rounded-lg object-cover border-2 border-amber-400/50 shadow-[0_0_18px_rgba(255,201,60,0.25)]" />
+            <img src={lastTeam.logoUrl} alt="" className="w-24 h-20 rounded-lg object-cover border-2 border-amber-400/50 shadow-[0_0_18px_rgba(255,201,60,0.25)]" />
           )}
           <div className="text-3xl text-amber-300 font-bold" style={{ textShadow: "0 2px 12px rgba(255,201,60,0.35)" }}>
             {lastTeam.name}: {lastAttempt.flat !== undefined

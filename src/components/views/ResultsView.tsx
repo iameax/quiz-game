@@ -37,7 +37,7 @@ function PodiumColumn({ entry }: { entry: RankedTeam }) {
     <div className="flex flex-col items-center gap-3 w-56">
       <div className={`flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 border ${s.border} ${s.shadow}`}>
         {entry.team.logoUrl && (
-          <img src={entry.team.logoUrl} alt="" className="w-20 h-16 rounded-lg object-cover border border-white/20" />
+          <img src={entry.team.logoUrl} alt="" className="w-28 h-24 rounded-lg object-cover border border-white/20" />
         )}
         <div className="text-xl font-semibold text-center">{entry.team.name}</div>
         <div className={`text-4xl font-bold tabular-nums ${s.text}`}>{entry.score}</div>
@@ -80,7 +80,7 @@ export function ResultsView({ state, isHost }: { state: HydratedGameState; isHos
             >
               <div className="text-2xl font-bold text-white/40 w-10 text-center tabular-nums">{r.place}</div>
               {r.team.logoUrl && (
-                <img src={r.team.logoUrl} alt="" className="w-12 h-9 rounded object-cover border border-white/20" />
+                <img src={r.team.logoUrl} alt="" className="w-16 h-12 rounded object-cover border border-white/20" />
               )}
               <div className="text-xl font-semibold flex-1">{r.team.name}</div>
               <div className="text-yellow-400 text-2xl font-bold tabular-nums">{r.score}</div>
