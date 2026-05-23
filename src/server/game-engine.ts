@@ -54,6 +54,7 @@ export function selectQuestion(
       valIdx: q.valIdx,
       value: question.value,
       timerState: "idle",
+      timerElapsedMs: 0,
       attempts: [],
       answerRevealed: false,
     },
@@ -74,6 +75,31 @@ export function toggleAnswer(state: GameState): GameState {
 export function startTimer(state: GameState, nowMs: number): GameState {
   if (!state.currentQuestion) throw new Error("no current question");
   if (state.currentQuestion.timerState !== "idle") throw new Error("timer not idle");
+  return {
+    ...state,
+    currentQuestion: { ...state.currentQuestion, timerState: "running", timerStartedAt: nowMs, timerElapsedMs: 0 },
+  };
+}
+
+export function pauseTimer(state: GameState, nowMs: number): GameState {
+  if (!state.currentQuestion) throw new Error("no current question");
+  if (state.currentQuestion.timerState !== "running") throw new Error("timer not running");
+  const startedAt = state.currentQuestion.timerStartedAt ?? nowMs;
+  const elapsed = state.currentQuestion.timerElapsedMs + (nowMs - startedAt);
+  return {
+    ...state,
+    currentQuestion: {
+      ...state.currentQuestion,
+      timerState: "paused",
+      timerElapsedMs: elapsed,
+      timerStartedAt: undefined,
+    },
+  };
+}
+
+export function resumeTimer(state: GameState, nowMs: number): GameState {
+  if (!state.currentQuestion) throw new Error("no current question");
+  if (state.currentQuestion.timerState !== "paused") throw new Error("timer not paused");
   return {
     ...state,
     currentQuestion: { ...state.currentQuestion, timerState: "running", timerStartedAt: nowMs },

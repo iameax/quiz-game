@@ -6,7 +6,7 @@
     "doc": "docs"
   },
   "scripts": {
-    "dev": "node server.js",
+    "dev": "nodemon --watch server.js --watch src/server --watch src/lib --ext js,ts server.js",
     "build": "next build",
     "start": "NODE_ENV=production node server.js",
     "test": "vitest run",
@@ -38,6 +38,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitest/ui": "^3.2.4",
     "autoprefixer": "^10.5.0",
+    "nodemon": "^3.1.14",
     "postcss": "^8.5.14",
     "tailwindcss": "^4.3.0",
     "tsx": "^4.22.0",

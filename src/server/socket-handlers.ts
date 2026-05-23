@@ -5,6 +5,8 @@ import {
   createGame,
   selectQuestion,
   startTimer,
+  pauseTimer,
+  resumeTimer,
   expireTimer,
   markAnswer,
   setScore,
@@ -42,8 +44,9 @@ function setExpiryTimer(io: Server) {
   if (!state?.currentQuestion) return;
   if (state.currentQuestion.timerState !== "running") return;
   const startedAt = state.currentQuestion.timerStartedAt!;
+  const elapsed = state.currentQuestion.timerElapsedMs;
   const totalMs = state.settings.roundTimeSec * 1000;
-  const remaining = Math.max(0, startedAt + totalMs - Date.now());
+  const remaining = Math.max(0, totalMs - elapsed - (Date.now() - startedAt));
   timers.current = setTimeout(() => {
     const s = gameStore.get();
     if (!s) return;
@@ -165,6 +168,7 @@ export function registerSocketHandlers(io: Server) {
         });
         gameStore.set(game);
         broadcast(io);
+        broadcastSound(io, "intro");
       }
     );
 
@@ -177,9 +181,33 @@ export function registerSocketHandlers(io: Server) {
       broadcastSound(io, "select");
     });
 
+    socket.on("host:play-sound", (input: { kind: SoundKind }) => {
+      const ALLOWED: SoundKind[] = ["applause", "wow"];
+      if (!ALLOWED.includes(input.kind)) return;
+      broadcastSound(io, input.kind);
+    });
+
     socket.on("host:start-timer", () => {
       const s = gameStore.get(); if (!s) return;
       const next = startTimer(s, Date.now());
+      gameStore.set(next);
+      broadcast(io);
+      setExpiryTimer(io);
+    });
+
+    socket.on("host:pause-timer", () => {
+      const s = gameStore.get(); if (!s) return;
+      if (s.currentQuestion?.timerState !== "running") return;
+      const next = pauseTimer(s, Date.now());
+      gameStore.set(next);
+      if (timers.current) { clearTimeout(timers.current); timers.current = null; }
+      broadcast(io);
+    });
+
+    socket.on("host:resume-timer", () => {
+      const s = gameStore.get(); if (!s) return;
+      if (s.currentQuestion?.timerState !== "paused") return;
+      const next = resumeTimer(s, Date.now());
       gameStore.set(next);
       broadcast(io);
       setExpiryTimer(io);
@@ -195,9 +223,12 @@ export function registerSocketHandlers(io: Server) {
 
     socket.on("host:toggle-answer", () => {
       const s = gameStore.get(); if (!s) return;
+      const wasRevealed = s.currentQuestion?.answerRevealed ?? false;
+      const hasCorrect = (s.currentQuestion?.attempts ?? []).some(a => a.pct > 0);
       const next = toggleAnswer(s);
       gameStore.set(next);
       broadcast(io);
+      if (!wasRevealed && !hasCorrect) broadcastSound(io, "noanswer");
     });
 
     socket.on("host:finish-question", () => {
@@ -218,6 +249,14 @@ export function registerSocketHandlers(io: Server) {
     socket.on("host:audio-pause", (input: { positionSec: number }) => {
       const s = gameStore.get(); if (!s) return;
       const next = audioPause(s, input);
+      gameStore.set(next);
+      broadcast(io);
+    });
+
+    socket.on("client:audio-ended", () => {
+      const s = gameStore.get(); if (!s) return;
+      if (!s.currentQuestion?.audioState?.playing) return;
+      const next = audioPause(s, { positionSec: 0 });
       gameStore.set(next);
       broadcast(io);
     });

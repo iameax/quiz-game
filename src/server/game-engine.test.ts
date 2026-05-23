@@ -3,6 +3,8 @@ import {
   createGame,
   selectQuestion,
   startTimer,
+  pauseTimer,
+  resumeTimer,
   expireTimer,
   markAnswer,
   finishQuestion,
@@ -71,6 +73,7 @@ describe("selectQuestion", () => {
       valIdx: 1,
       value: 200,
       timerState: "idle",
+      timerElapsedMs: 0,
       attempts: [],
       answerRevealed: false,
     });
@@ -114,6 +117,39 @@ describe("timer", () => {
     const running = startTimer(opened, 1000);
     const next = expireTimer(running);
     expect(next.currentQuestion?.timerState).toBe("expired");
+  });
+
+  test("pauseTimer accumulates elapsed and clears startedAt", () => {
+    const running = startTimer(opened, 1000);
+    const paused = pauseTimer(running, 3500);
+    expect(paused.currentQuestion?.timerState).toBe("paused");
+    expect(paused.currentQuestion?.timerElapsedMs).toBe(2500);
+    expect(paused.currentQuestion?.timerStartedAt).toBeUndefined();
+  });
+
+  test("pauseTimer throws if not running", () => {
+    expect(() => pauseTimer(opened, 1000)).toThrow();
+  });
+
+  test("resumeTimer returns to running, preserves elapsed", () => {
+    const running = startTimer(opened, 1000);
+    const paused = pauseTimer(running, 3500);
+    const resumed = resumeTimer(paused, 5000);
+    expect(resumed.currentQuestion?.timerState).toBe("running");
+    expect(resumed.currentQuestion?.timerElapsedMs).toBe(2500);
+    expect(resumed.currentQuestion?.timerStartedAt).toBe(5000);
+  });
+
+  test("resumeTimer throws if not paused", () => {
+    expect(() => resumeTimer(opened, 1000)).toThrow();
+  });
+
+  test("pause then resume then pause accumulates correctly", () => {
+    const r1 = startTimer(opened, 1000);
+    const p1 = pauseTimer(r1, 2000); // +1000
+    const r2 = resumeTimer(p1, 5000);
+    const p2 = pauseTimer(r2, 6500); // +1500
+    expect(p2.currentQuestion?.timerElapsedMs).toBe(2500);
   });
 });
 

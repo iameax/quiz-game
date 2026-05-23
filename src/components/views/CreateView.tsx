@@ -8,7 +8,7 @@ export function CreateView({ packs, teams }: {
   teams: Team[];
 }) {
   const [packId, setPackId] = useState<string>(packs[0]?.id ?? "");
-  const [roundTimeSec, setRoundTimeSec] = useState(60);
+  const [roundTimeSec, setRoundTimeSec] = useState(30);
   const [penaltyPct, setPenaltyPct] = useState(50);
   const [selected, setSelected] = useState<Set<string>>(() => new Set(teams.map(t => t.id)));
   const [newTeamName, setNewTeamName] = useState("");

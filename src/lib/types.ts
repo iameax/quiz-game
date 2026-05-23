@@ -49,8 +49,9 @@ export type CurrentQuestion = {
   catIdx: number;
   valIdx: number;
   value: number;
-  timerState: "idle" | "running" | "expired";
+  timerState: "idle" | "running" | "paused" | "expired";
   timerStartedAt?: number;
+  timerElapsedMs: number;
   attempts: Attempt[];
   audioState?: AudioState;
   answerRevealed: boolean;
@@ -73,4 +74,4 @@ export type HydratedGameState = Omit<GameState, "teamIds"> & {
   teams: Team[];
 };
 
-export type SoundKind = "correct" | "wrong" | "timer-end" | "select";
+export type SoundKind = "correct" | "wrong" | "timer-end" | "select" | "intro" | "noanswer" | "applause" | "wow";

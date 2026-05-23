@@ -30,6 +30,8 @@ export function QuestionView({ state, pack, isHost }: { state: HydratedGameState
       if (e.code === "Space") {
         e.preventDefault();
         if (cq.timerState === "idle") s.emit("host:start-timer");
+        else if (cq.timerState === "running") s.emit("host:pause-timer");
+        else if (cq.timerState === "paused") s.emit("host:resume-timer");
       } else if (e.code === "ArrowLeft") {
         e.preventDefault();
         if (cq.answerRevealed) s.emit("host:toggle-answer");
@@ -46,6 +48,7 @@ export function QuestionView({ state, pack, isHost }: { state: HydratedGameState
   }, [isHost, cq?.timerState, cq?.answerRevealed]);
 
   useEffect(() => {
+    if (isHost) return;
     const a = audioRef.current;
     if (!a || !q?.audio) return;
     if (!audioState) { a.pause(); a.currentTime = 0; return; }
@@ -55,19 +58,24 @@ export function QuestionView({ state, pack, isHost }: { state: HydratedGameState
     if (Math.abs(a.currentTime - targetPos) > 0.5) a.currentTime = targetPos;
     if (audioState.playing) a.play().catch(() => {});
     else a.pause();
-  }, [audioState?.playing, audioState?.startedAt, audioState?.positionSec, q?.audio]);
+  }, [isHost, audioState?.playing, audioState?.startedAt, audioState?.positionSec, q?.audio]);
 
   if (!cq || !q) return null;
 
   const sock = () => getSocket(isHost ? "host" : "spectator");
 
+  const currentAudioPos = () => {
+    if (!audioState) return 0;
+    if (audioState.playing && audioState.startedAt) {
+      return audioState.positionSec + (Date.now() - audioState.startedAt) / 1000;
+    }
+    return audioState.positionSec;
+  };
   const playAudio = () => {
-    const pos = audioRef.current?.currentTime ?? 0;
-    sock().emit("host:audio-play", { positionSec: pos });
+    sock().emit("host:audio-play", { positionSec: currentAudioPos() });
   };
   const pauseAudio = () => {
-    const pos = audioRef.current?.currentTime ?? 0;
-    sock().emit("host:audio-pause", { positionSec: pos });
+    sock().emit("host:audio-pause", { positionSec: currentAudioPos() });
   };
 
   const lastAttempt = cq.attempts[cq.attempts.length - 1];
@@ -102,12 +110,12 @@ export function QuestionView({ state, pack, isHost }: { state: HydratedGameState
           />
         </div>
       )}
-      {q.audio && (
+      {q.audio && !isHost && (
         <audio
           ref={audioRef}
           src={q.audio}
           preload="auto"
-          onEnded={() => { if (isHost) sock().emit("host:audio-pause", { positionSec: 0 }); }}
+          onEnded={() => getSocket("spectator").emit("client:audio-ended")}
         />
       )}
       <div
@@ -150,6 +158,7 @@ export function QuestionView({ state, pack, isHost }: { state: HydratedGameState
           <div className={`px-2 transition-opacity ${cq.timerState === "idle" ? "opacity-0" : "opacity-100"}`}>
             <TimerBar
               startedAt={cq.timerStartedAt}
+              elapsedMs={cq.timerElapsedMs}
               durationSec={state.settings.roundTimeSec}
               state={cq.timerState}
             />
@@ -242,6 +251,7 @@ export function QuestionView({ state, pack, isHost }: { state: HydratedGameState
         <div className={`fixed bottom-6 left-6 right-6 z-10 transition-opacity ${cq.timerState === "idle" ? "opacity-0" : "opacity-100"}`}>
           <TimerBar
             startedAt={cq.timerStartedAt}
+            elapsedMs={cq.timerElapsedMs}
             durationSec={state.settings.roundTimeSec}
             state={cq.timerState}
           />
