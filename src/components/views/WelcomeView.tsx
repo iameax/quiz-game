@@ -39,7 +39,7 @@ export function WelcomeView({ state, pack, isHost }: { state: HydratedGameState;
   return (
     <main className="min-h-screen flex flex-col items-center justify-center text-center px-8 bg-linear-to-br from-slate-950 via-blue-950 to-slate-950">
       <div
-        className="transition-opacity ease-in-out"
+        className={`transition-opacity ease-in-out ${displayStep >= 1 ? "-mt-32 md:-mt-48" : ""}`}
         style={{ opacity: visible ? 1 : 0, transitionDuration: `${FADE_MS}ms` }}
       >
         {displayStep === 0 ? (

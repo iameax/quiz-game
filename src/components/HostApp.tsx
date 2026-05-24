@@ -30,7 +30,7 @@ export function HostApp() {
       {state.phase === "question" && <QuestionView state={state} pack={pack} isHost />}
       {state.phase === "results" && <ResultsView state={state} isHost />}
       {(state.phase === "welcome" || state.phase === "board") && <HostMenu state={state} />}
-      {(state.phase === "board" || state.phase === "question") && <HostSoundPanel />}
+      {state.phase === "question" && <HostSoundPanel />}
     </>
   );
 }

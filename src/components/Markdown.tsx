@@ -36,6 +36,16 @@ export function Markdown({ children, className }: { children: string; className?
               {children}
             </span>
           ),
+          ol: ({ children }) => (
+            <ol className="list-decimal list-outside text-left inline-block mx-auto pl-10">
+              {children}
+            </ol>
+          ),
+          ul: ({ children }) => (
+            <ul className="list-disc list-outside text-left inline-block mx-auto pl-10">
+              {children}
+            </ul>
+          ),
         }}
       >
         {children}

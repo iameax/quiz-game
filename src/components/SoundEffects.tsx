@@ -25,10 +25,12 @@ export function SoundEffects() {
   const audios = useRef<Record<string, HTMLAudioElement>>({});
   const clocks = useRef<Record<"clock" | "clock2", HTMLAudioElement | null>>({ clock: null, clock2: null });
   const categoriesRef = useRef<HTMLAudioElement | null>(null);
+  const resultsRef = useRef<HTMLAudioElement | null>(null);
   const activeClock = useRef<"clock" | "clock2" | null>(null);
   const unlocked = useRef(false);
   const wantClock = useRef(false);
   const wantCategories = useRef(false);
+  const wantResults = useRef(false);
   const prevTimerState = useRef<string | undefined>(undefined);
   const currentValue = useRef<number | undefined>(undefined);
   const [needsUnlock, setNeedsUnlock] = useState(false);
@@ -50,6 +52,12 @@ export function SoundEffects() {
       a.preload = "auto";
       a.loop = true;
       categoriesRef.current = a;
+    }
+    {
+      const a = new Audio("/sounds/results.mp3");
+      a.preload = "auto";
+      a.loop = true;
+      resultsRef.current = a;
     }
 
     const s = getSocket("spectator");
@@ -81,6 +89,17 @@ export function SoundEffects() {
         } else if (!cat.paused) {
           cat.pause();
           cat.currentTime = 0;
+        }
+      }
+      const inResults = state?.phase === "results";
+      wantResults.current = inResults;
+      const res = resultsRef.current;
+      if (res) {
+        if (inResults) {
+          if (res.paused) res.play().catch(() => setNeedsUnlock(true));
+        } else if (!res.paused) {
+          res.pause();
+          res.currentTime = 0;
         }
       }
       const ts = state?.currentQuestion?.timerState;
@@ -120,6 +139,8 @@ export function SoundEffects() {
       stopAllClocks(false);
       const cat = categoriesRef.current;
       if (cat && !cat.paused) cat.pause();
+      const res = resultsRef.current;
+      if (res && !res.paused) res.pause();
     };
   }, []);
 
@@ -140,6 +161,12 @@ export function SoundEffects() {
     if (cat) {
       cat.play().then(() => {
         if (!wantCategories.current) { cat.pause(); cat.currentTime = 0; }
+      }).catch(() => {});
+    }
+    const res = resultsRef.current;
+    if (res) {
+      res.play().then(() => {
+        if (!wantResults.current) { res.pause(); res.currentTime = 0; }
       }).catch(() => {});
     }
     setNeedsUnlock(false);
